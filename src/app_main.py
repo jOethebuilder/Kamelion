@@ -1,102 +1,166 @@
 import tkinter as tk
-from tkinter import messagebox
+from tkinter import ttk, messagebox
+import json
+import os
 
-class MockDatabase:
-    """
-    A placeholder database class to simulate database transactions.
-    """
-    def add_custom_spool(self, spool_type, name, td_value, hex_value):
-        print(f"[DB Sync] Type: {spool_type} | Name: {name} | TD: {td_value} | Hex: {hex_value}")
+# Import our custom background repository modules
+from database_manager import KamelionLibraryManager
+from hardware_listener import KamelionHardwareListener
 
 class KamelionDesktopApp:
-    def __init__(self, root):
-        # 1. SETUP MAIN WINDOW
-        self.root = root
-        self.root.title("Kamelion Control Panel")
-        self.root.geometry("400x350")
+    def __init__(self, window_root):
+        # 1. SETUP MAIN WINDOW WITH FULL STUDIO BOUNDS
+        self.root = window_root
+        self.root.title("KAMELION - High-Fidelity Slicing Studio")
+        self.root.geometry("1200x750")
         
-        # 2. DEFINE SYSTEM COLORS
-        self.color_dark_bg = "#18181b"       # Zinc 900
-        self.color_panel_bg = "#27272a"      # Zinc 800
-        self.color_armor_silver = "#a1a1aa"  # Zinc 400
-        self.color_sea_green = "#10b981"     # Emerald 500
+        # 2. DEFINE SYSTEM COLORS (Polished Robot Chrome & Character Sea-Green Palette)
+        self.color_armor_silver = "#f1f5f9"  # Smooth silver armor elements (Slate 100)
+        self.color_sea_green = "#3fa88c"     # Signature Mechanical Mint/Sea-Green Highlight
+        self.color_dark_bg = "#171921"       # Base layout background layer
+        self.color_panel_bg = "#1f2330"      # Window container frames and control panels
+        self.color_text_light = "#fafafa"    # Stark polished steel text whites
         
         self.root.configure(bg=self.color_dark_bg)
+
+        # 3. INITIALIZE LOCAL FILAMENT DATABASE TRACKING ARCHIVE
+        self.db = KamelionLibraryManager()
+
+        # 4. INITIALIZE ASYNCHRONOUS MULTITHREADED USB HARDWARE PORT MONITOR
+        self.hardware = KamelionHardwareListener(callback_on_data_received=self.handle_automated_td1_handshake)
+        self.hardware.start_background_scanning()
+
+        # 5. ASSEMBLE COMPLETE INTERFACE MULTI-PANEL VIEWPORTS
+        self._construct_global_header_bar()
+        self._construct_workspace_viewports()
         
-        # 3. INITIALIZE DATABASE HOOK
-        self.db = MockDatabase()
+    def _construct_global_header_bar(self):
+        # Top Menu Bar Structure
+        header_frame = tk.Frame(self.root, bg=self.color_panel_bg, height=50, bd=1, relief="groove")
+        header_frame.pack(side="top", fill="x")
+        header_frame.pack_propagate(False)
+
+        # Brand Character Logo Widget Header (Triggers Detailed Asset Pop-Up)
+        logo_label = tk.Label(header_frame, text="🦎 KAMELION", font=("Segoe UI", 16, "bold"), fg=self.color_sea_green, bg=self.color_panel_bg, cursor="hand2")
+        logo_label.pack(side="left", padx=15, pady=8)
+        logo_label.bind("<Button-1>", lambda e: self.display_high_fidelity_character_logo())
+
+        # Connectivity Live Tracking Badge Widget
+        self.status_badge = tk.Label(header_frame, text="TD-1: Idle ●", font=("Segoe UI", 10, "bold"), fg="#64748b", bg=self.color_panel_bg, cursor="hand2")
+        self.status_badge.pack(side="right", padx=20, pady=12)
+        self.status_badge.bind("<Button-1>", lambda e: self.launch_manual_hardware_popup())
+
+    def _construct_workspace_viewports(self):
+        # Core split workspace layout container
+        self.workspace_container = tk.Frame(self.root, bg=self.color_dark_bg)
+        self.workspace_container.pack(side="top", fill="both", expand=True)
+
+        # 1. Permanent Inventory Library Slat Sidebar (Right Side Panel - Always Visible)
+        self.sidebar_panel = tk.Frame(self.workspace_container, bg=self.color_panel_bg, width=280, bd=1, relief="ridge")
+        self.sidebar_panel.pack(side="right", fill="y")
+        self.sidebar_panel.pack_propagate(False)
+
+        sidebar_title = tk.Label(self.sidebar_panel, text="ACTIVE FILAMENT LIBRARY", font=("Segoe UI", 10, "bold"), fg=self.color_armor_silver, bg=self.color_panel_bg)
+        sidebar_title.pack(side="top", fill="x", pady=15)
+
+        self.library_scroll_canvas = tk.Canvas(self.sidebar_panel, bg=self.color_panel_bg, highlightthickness=0)
+        self.library_scroll_canvas.pack(side="top", fill="both", expand=True, padx=10)
+        self.refresh_library_sidebar_display()
+
+        # 2. Fluid Split Viewports Panel (Left Column Studio Channels Stack)
+        self.viewports_frame = tk.Frame(self.workspace_container, bg=self.color_dark_bg)
+        self.viewports_frame.pack(side="left", fill="both", expand=True)
+
+        # Viewport Left Column: Image Ingestion Drop Channel Panel
+        self.preview_panel = tk.Frame(self.viewports_frame, bg="#1f2937", bd=2, relief="dashed")
+        self.preview_panel.pack(side="left", fill="both", expand=True, padx=20, pady=20)
         
-        # 4. STATUS BADGE
-        self.status_badge = tk.Label(
-            self.root, 
-            text="TD-1: Disconnected ○", 
-            fg="#ef4444", 
-            bg=self.color_dark_bg,
-            font=("Segoe UI", 10, "bold")
-        )
-        self.status_badge.pack(pady=20)
+        preview_placeholder = tk.Label(self.preview_panel, text="[ Drop/Load Target Asset Image ]", font=("Segoe UI", 11), fg="#9ca3af", bg="#1f2937")
+        preview_placeholder.pack(expand=True)
+        self.preview_panel.bind("<Button-1>", lambda e: self.simulate_photo_asset_drop())
+
+        # Viewport Right Column: Matrix Slice Engine Target View Panel
+        self.studio_panel = tk.Frame(self.viewports_frame, bg=self.color_panel_bg, bd=1, relief="solid")
+        self.studio_panel.pack(side="right", fill="both", expand=True, padx=20, pady=20)
+
+        studio_placeholder = tk.Label(self.studio_panel, text="Studio Window Grayscale Depth Simulation", font=("Segoe UI", 11), fg="#64748b", bg=self.color_panel_bg)
+        studio_placeholder.pack(expand=True)
+
+    def simulate_photo_asset_drop(self):
+        # Action layout routine: Collapses preview panel and scales studio window full viewport width
+        self.preview_panel.pack_forget()
         
-        # 5. CONTROL BUTTON RECEPTACLES
-        btn_frame = tk.Frame(self.root, bg=self.color_panel_bg, padx=15, pady=15)
-        btn_frame.pack(pady=15, fill="x", padx=30)
-        
-        sync_trigger = tk.Button(
-            btn_frame, 
-            text="Launch Spool Sync Window", 
-            command=self.open_sync_dialog,
-            bg=self.color_sea_green,
-            fg=self.color_dark_bg,
-            font=("Segoe UI", 9, "bold")
-        )
-        sync_trigger.pack(fill="x", pady=5)
-        
-        logo_trigger = tk.Button(
-            btn_frame, 
-            text="Launch Emblem System Canvas", 
-            command=self.display_high_fidelity_character_logo,
-            bg=self.color_dark_bg,
-            fg="#ffffff",
-            font=("Segoe UI", 9)
-        )
-        logo_trigger.pack(fill="x", pady=5)
+        # Build out expandable parameters bottom layout timeline slider drawer row
+        slider_drawer = tk.Frame(self.root, bg=self.color_panel_bg, height=90, bd=1, relief="sunken")
+        slider_drawer.pack(side="bottom", fill="x")
+        slider_drawer.pack_propagate(False)
+
+        timeline_label = tk.Label(slider_drawer, text="Color Transmission Depth Matrix Timeline", font=("Segoe UI", 9, "bold"), fg=self.color_sea_green, bg=self.color_panel_bg)
+        timeline_label.pack(side="top", anchor="w", padx=15, pady=5)
+
+        mock_slider = ttk.Scale(slider_drawer, from_=0, to=100, orient="horizontal")
+        mock_slider.pack(fill="x", padx=20, pady=5)
 
     def refresh_library_sidebar_display(self):
-        """
-        Refreshes structural tracking panels inside the core application view.
-        """
-        print("[UI Update] Library tracking views successfully re-indexed.")
+        # Clears old visual cards and lists fresh inventory nodes directly from JSON database
+        for widget in self.library_scroll_canvas.winfo_children():
+            widget.destroy()
 
-    def open_sync_dialog(self):
-        """
-        Generates the popup window wrapper handling custom spool variables 
-        and synchronization sequence behaviors.
-        """
+        presets = self.db.inventory.get("presets", {})
+        customs = self.db.inventory.get("custom_spools", {})
+
+        # Draw default entries onto visible layout panel cards
+        for key, item in {**presets, **customs}.items():
+            card = tk.Frame(self.library_scroll_canvas, bg="#262b3d", height=45, bd=1, relief="flat")
+            card.pack(fill="x", pady=4, ipady=4)
+            
+            swatch = tk.Frame(card, bg=item.get("hex", "#ffffff"), width=16, height=16, bd=1, relief="solid")
+            swatch.pack(side="left", padx=10, pady=10)
+            
+            label_text = f"{item.get('brand')} - {item.get('name')}\nTD: {item.get('td')}"
+            txt = tk.Label(card, text=label_text, font=("Segoe UI", 8), fg="#cbd5e1", bg="#262b3d", justify="left")
+            txt.pack(side="left", padx=5)
+
+    def handle_automated_td1_handshake(self, td_val, hex_code):
+        # Hardware Auto-detect: Updates global connection indicators and pops calibration layout
+        self.status_badge.configure(text="TD-1: Connected ●", fg=self.color_sea_green)
+        self.launch_manual_hardware_popup(auto_hex=hex_code, auto_td=td_val)
+
+    def launch_manual_hardware_popup(self, auto_hex="#000000", auto_td=1.0):
+        # Central Pop-In Intercept Handshake Window Container
         pop = tk.Toplevel(self.root)
-        pop.title("Sync Spool Config")
-        pop.geometry("420x320")
+        pop.title("TD-1 Tool Intercept Calibration")
+        pop.geometry("420x340")
         pop.configure(bg=self.color_panel_bg)
-        
+        pop.resizable(False, False)
+
+        # Force pop-up window overlay focus
         pop.transient(self.root)
         pop.grab_set()
 
-        spectrum_bar = tk.Canvas(pop, width=300, height=15, bg=self.color_dark_bg, highlightthickness=0)
-        spectrum_bar.pack(pady=20)
-        
-        auto_td = 1.25
-        auto_hex = "#ef4444"
+        tk.Label(pop, text="TD-1 CALIBRATION HANDSHAKE", font=("Segoe UI", 11, "bold"), fg=self.color_sea_green, bg=self.color_panel_bg).pack(pady=15)
 
-        # Display a basic gradient fill across vector bounds
+        # Interactive Color Swatch Preview Box
+        swatch_frame = tk.Frame(pop, bg=auto_hex, width=60, height=35, bd=1, relief="solid")
+        swatch_frame.pack(pady=5)
+
+        # Manual Override Gradient Spectrum Selection Slider Canvas Bar
+        tk.Label(pop, text="Manual Override Gradient Spectrum Slider:", font=("Segoe UI", 8), fg="#94a3b8", bg=self.color_panel_bg).pack()
+        spectrum_bar = tk.Canvas(pop, bg="#e2e8f0", height=15, width=300, highlightthickness=0)
+        spectrum_bar.pack(pady=10)
+        
+        # Draw explicit horizontal spectrum fill slices
         spectrum_bar.create_rectangle(0, 0, 100, 15, fill="#ef4444", outline="")
         spectrum_bar.create_rectangle(100, 0, 200, 15, fill="#3b82f6", outline="")
         spectrum_bar.create_rectangle(200, 0, 300, 15, fill="#10b981", outline="")
 
-        # Text input entry fields tracking names and values
+        # Text input entry fields tracking custom names
         tk.Label(pop, text="Spool Descriptor Name:", font=("Segoe UI", 9), fg=self.color_armor_silver, bg=self.color_panel_bg).pack(anchor="w", padx=60)
         entry_name = tk.Entry(pop, bg=self.color_dark_bg, fg="#ffffff", insertbackground="white", bd=1)
         entry_name.insert(0, "QIDI White Custom")
         entry_name.pack(fill="x", padx=60, pady=4)
 
-        # Commit Sync Button Action Handler
+        # Commit Sync Button Action Handler to push straight to scrolling database panel
         def commit_sync_action():
             self.db.add_custom_spool("Custom", entry_name.get(), auto_td, auto_hex)
             self.refresh_library_sidebar_display()
@@ -108,51 +172,34 @@ class KamelionDesktopApp:
         sync_btn.pack(pady=20)
 
     def display_high_fidelity_character_logo(self):
-        """
-        Generates standalone canvas showcase for displaying mechanical logo geometry assets.
-        """
+        # Clickable brand window executing the custom robotic profile face vector loops
         logo_window = tk.Toplevel(self.root)
         logo_window.title("Kamelion Asset Showcase")
-        logo_window.geometry("320x340")
+        logo_window.geometry("300x300")
         logo_window.configure(bg=self.color_dark_bg)
         
-        lbl = tk.Label(logo_window, text="KAMELION EMBLEM SYSTEM", font=("Segoe UI", 10, "bold"), fg=self.color_sea_green, bg=self.color_dark_bg)
+        lbl = tk.Label(logo_window, text="KAMELION ROBOT EMBLEM SYSTEM", font=("Segoe UI", 10, "bold"), fg=self.color_sea_green, bg=self.color_dark_bg)
         lbl.pack(pady=15)
         
-        # Expanded canvas bounds to host the cartoon character drawings cleanly
-        canvas = tk.Canvas(logo_window, width=200, height=200, bg=self.color_dark_bg, highlightthickness=0)
+        canvas = tk.Canvas(logo_window, width=160, height=160, bg=self.color_dark_bg, highlightthickness=0)
         canvas.pack()
         
-        # --- CARTOON CHAMELEON MASCOT VECTOR DRAWING SEQUENCE ---
+        # --- ROBOTIC PROFILE HEAD WITH CUTAWAY EMBEDDED ELECTRONIC BRAIN VECTOR MAP ---
+        # 1. Outer Silver Metallic Robot Profile Head Armor Frame Base
+        canvas.create_oval(20, 20, 140, 140, fill=self.color_panel_bg, outline=self.color_sea_green, width=3)
         
-        # 1. Back Head Crest / Ridge
-        canvas.create_polygon(130, 70, 185, 35, 160, 95, fill="#34d399", outline="#047857", width=3)
+        # 2. Cutaway Top-Back Accent Curve Exposing Internal Systems
+        canvas.create_arc(25, 25, 135, 135, start=45, extent=105, fill="#13151a", outline=self.color_sea_green, width=1)
         
-        # 2. Main Circular Head Base
-        canvas.create_oval(50, 60, 170, 160, fill=self.color_sea_green, outline="#047857", width=3)
+        # 3. High-Contrast Cyber-Circuit Internal Matrix Glow Layer
+        canvas.create_oval(55, 35, 110, 75, fill=self.color_sea_green, outline="")
         
-        # 3. Left-pointing Snout Polygon
-        canvas.create_polygon(60, 95, 15, 115, 60, 145, fill=self.color_sea_green, outline="#047857", width=3)
+        # 4. Deep Metallic Iris Sub-Joint Node
+        canvas.create_oval(45, 45, 115, 115, fill=self.color_sea_green, outline="")
         
-        # 4. Color Mask Overlap (Blends the snout seamlessly into the head circle)
-        canvas.create_oval(53, 63, 167, 157, fill=self.color_sea_green, outline="")
-        
-        # 5. Iconic Large Conical Chameleon Eye Turret
-        canvas.create_oval(90, 50, 160, 120, fill="#22c55e", outline="#047857", width=3)
-        
-        # 6. Vibrant Cartoon Iris
-        canvas.create_oval(105, 65, 145, 105, fill="#3b82f6", outline="")
-        
-        # 7. Oversized Cartoon Pupil
-        canvas.create_oval(115, 75, 135, 95, fill="#18181b", outline="")
-        
-        # 8. Stylized Glossy Reflection Catchlight
-        canvas.create_oval(118, 77, 125, 84, fill="#ffffff", outline="")
-        
-        # 9. Smooth Animated Mouth Smile
-        canvas.create_line(22, 118, 48, 127, 65, 122, smooth=True, fill="#047857", width=3)
+        # 5. Core Visual Reflection Pupil Glint Hub
+        canvas.create_oval(65, 65, 95, 95, fill=self.color_armor_silver, outline="")
 
-# 6. APP EXECUTION POINT
 if __name__ == "__main__":
     root = tk.Tk()
     app = KamelionDesktopApp(root)

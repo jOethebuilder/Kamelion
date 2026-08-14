@@ -15,7 +15,7 @@ class KamelionDesktopApp:
         self.root.title("Kamelion Control Panel")
         self.root.geometry("400x350")
         
-        # 2. DEFINE SYSTEM COLORS (Used by your snippets)
+        # 2. DEFINE SYSTEM COLORS
         self.color_dark_bg = "#18181b"       # Zinc 900
         self.color_panel_bg = "#27272a"      # Zinc 800
         self.color_armor_silver = "#a1a1aa"  # Zinc 400
@@ -26,7 +26,7 @@ class KamelionDesktopApp:
         # 3. INITIALIZE DATABASE HOOK
         self.db = MockDatabase()
         
-        # 4. STATUS BADGE (Targeted by the sync button action)
+        # 4. STATUS BADGE
         self.status_badge = tk.Label(
             self.root, 
             text="TD-1: Disconnected ○", 
@@ -71,26 +71,20 @@ class KamelionDesktopApp:
         Generates the popup window wrapper handling custom spool variables 
         and synchronization sequence behaviors.
         """
-        # Create the popup window handle referenced in your text entry fields
         pop = tk.Toplevel(self.root)
         pop.title("Sync Spool Config")
         pop.geometry("420x320")
         pop.configure(bg=self.color_panel_bg)
         
-        # Force modal focus behavior
         pop.transient(self.root)
         pop.grab_set()
 
-        # Canvas container matching the bar drawing bounds
         spectrum_bar = tk.Canvas(pop, width=300, height=15, bg=self.color_dark_bg, highlightthickness=0)
         spectrum_bar.pack(pady=20)
         
-        # Setup foundational placeholder values for the DB call parameter tracking
         auto_td = 1.25
         auto_hex = "#ef4444"
 
-        # --- RE-INTEGRATED GRADIENT & ENTRY CODE SECTION ---
-        
         # Display a basic gradient fill across vector bounds
         spectrum_bar.create_rectangle(0, 0, 100, 15, fill="#ef4444", outline="")
         spectrum_bar.create_rectangle(100, 0, 200, 15, fill="#3b82f6", outline="")
@@ -117,24 +111,48 @@ class KamelionDesktopApp:
         """
         Generates standalone canvas showcase for displaying mechanical logo geometry assets.
         """
-        # Clickable logo modal event displaying vector node coordinates
         logo_window = tk.Toplevel(self.root)
         logo_window.title("Kamelion Asset Showcase")
-        logo_window.geometry("300x300")
+        logo_window.geometry("320x340")
         logo_window.configure(bg=self.color_dark_bg)
         
         lbl = tk.Label(logo_window, text="KAMELION EMBLEM SYSTEM", font=("Segoe UI", 10, "bold"), fg=self.color_sea_green, bg=self.color_dark_bg)
         lbl.pack(pady=15)
         
-        canvas = tk.Canvas(logo_window, width=160, height=160, bg=self.color_dark_bg, highlightthickness=0)
+        # Expanded canvas bounds to host the cartoon character drawings cleanly
+        canvas = tk.Canvas(logo_window, width=200, height=200, bg=self.color_dark_bg, highlightthickness=0)
         canvas.pack()
         
-        # Hand-drawn geometry nodes tracking the round mechanical eye configurations
-        canvas.create_oval(20, 20, 140, 140, fill=self.color_panel_bg, outline=self.color_sea_green, width=3)
-        canvas.create_oval(45, 45, 115, 115, fill=self.color_sea_green, outline="")
-        canvas.create_oval(65, 65, 95, 95, fill="#ffffff", outline="")
+        # --- CARTOON CHAMELEON MASCOT VECTOR DRAWING SEQUENCE ---
+        
+        # 1. Back Head Crest / Ridge
+        canvas.create_polygon(130, 70, 185, 35, 160, 95, fill="#34d399", outline="#047857", width=3)
+        
+        # 2. Main Circular Head Base
+        canvas.create_oval(50, 60, 170, 160, fill=self.color_sea_green, outline="#047857", width=3)
+        
+        # 3. Left-pointing Snout Polygon
+        canvas.create_polygon(60, 95, 15, 115, 60, 145, fill=self.color_sea_green, outline="#047857", width=3)
+        
+        # 4. Color Mask Overlap (Blends the snout seamlessly into the head circle)
+        canvas.create_oval(53, 63, 167, 157, fill=self.color_sea_green, outline="")
+        
+        # 5. Iconic Large Conical Chameleon Eye Turret
+        canvas.create_oval(90, 50, 160, 120, fill="#22c55e", outline="#047857", width=3)
+        
+        # 6. Vibrant Cartoon Iris
+        canvas.create_oval(105, 65, 145, 105, fill="#3b82f6", outline="")
+        
+        # 7. Oversized Cartoon Pupil
+        canvas.create_oval(115, 75, 135, 95, fill="#18181b", outline="")
+        
+        # 8. Stylized Glossy Reflection Catchlight
+        canvas.create_oval(118, 77, 125, 84, fill="#ffffff", outline="")
+        
+        # 9. Smooth Animated Mouth Smile
+        canvas.create_line(22, 118, 48, 127, 65, 122, smooth=True, fill="#047857", width=3)
 
-# 6. APP EXECUTION POINT (The main routine block)
+# 6. APP EXECUTION POINT
 if __name__ == "__main__":
     root = tk.Tk()
     app = KamelionDesktopApp(root)

@@ -1,12 +1,7 @@
-import tkinter as tk
-from tkinter import ttk, messagebox
-import json
-import os
+# Kamelion Desktop Entry Point - app_main.py
 
-# Import our custom background repository modules
-from database_manager import KamelionLibraryManager
-from hardware_listener import KamelionHardwareListener
-
+import tkinter as tkfrom tkinter import ttk, messageboximport jsonimport os
+# Import our custom background repository modulesfrom database_manager import KamelionLibraryManagerfrom hardware_listener import KamelionHardwareListener
 class KamelionDesktopApp:
     def __init__(self, window_root):
         self.root = window_root
@@ -16,6 +11,7 @@ class KamelionDesktopApp:
 
         # Load our database layer
         self.db = KamelionLibraryManager()
+
 
         # Visual Theme Color Definitions (Cartoon Kamelion Character Matching)
         self.color_armor_silver = "#f1f5f9"
@@ -36,6 +32,7 @@ class KamelionDesktopApp:
         # Top Menu Bar Structure
         header_frame = tk.Frame(self.root, bg=self.color_panel_bg, height=50, bd=1, relief="groove")
         header_frame.pack(side="top", fill="x")
+
         header_frame.pack_propagate(False)
 
         # Brand Character Logo Widget Header
@@ -55,6 +52,7 @@ class KamelionDesktopApp:
 
         # 1. Permanent Inventory Library Slat Sidebar (Right Side Panel)
         self.sidebar_panel = tk.Frame(self.workspace_container, bg=self.color_panel_bg, width=280, bd=1, relief="ridge")
+
         self.sidebar_panel.pack(side="right", fill="y")
         self.sidebar_panel.pack_propagate(False)
 
@@ -74,6 +72,7 @@ class KamelionDesktopApp:
         self.preview_panel.pack(side="left", fill="both", expand=True, padx=20, pady=20)
         
         preview_placeholder = tk.Label(self.preview_panel, text="[ Drop/Load Target Asset Image ]", font=("Segoe UI", 11), fg="#9ca3af", bg="#1f2937")
+
         preview_placeholder.pack(expand=True)
         self.preview_panel.bind("<Button-1>", lambda e: self.simulate_photo_asset_drop())
 
@@ -92,6 +91,7 @@ class KamelionDesktopApp:
         slider_drawer = tk.Frame(self.root, bg=self.color_panel_bg, height=90, bd=1, relief="sunken")
         slider_drawer.pack(side="bottom", fill="x")
         slider_drawer.pack_propagate(False)
+
 
         timeline_label = tk.Label(slider_drawer, text="Color Transmission Depth Matrix Timeline", font=("Segoe UI", 9, "bold"), fg=self.color_sea_green, bg=self.color_panel_bg)
         timeline_label.pack(side="top", anchor="w", padx=15, pady=5)
@@ -112,6 +112,7 @@ class KamelionDesktopApp:
             card = tk.Frame(self.library_scroll_canvas, bg="#262b3d", height=45, bd=1, relief="flat")
             card.pack(fill="x", pady=4, ipady=4)
             
+
             swatch = tk.Frame(card, bg=item.get("hex", "#ffffff"), width=16, height=16, bd=1, relief="solid")
             swatch.pack(side="left", padx=10, pady=10)
             
@@ -132,6 +133,7 @@ class KamelionDesktopApp:
         pop.configure(bg=self.color_panel_bg)
         pop.resizable(False, False)
 
+
         tk.Label(pop, text="TD-1 CALIBRATION HANDSHAKE", font=("Segoe UI", 11, "bold"), fg=self.color_sea_green, bg=self.color_panel_bg).pack(pady=15)
 
         # Interactive Color Swatch Spectrum Box
@@ -151,6 +153,7 @@ class KamelionDesktopApp:
         tk.Label(pop, text="Spool Descriptor Name:", font=("Segoe UI", 9), fg=self.color_armor_silver, bg=self.color_panel_bg).pack(anchor="w", padx=60)
         entry_name = tk.Entry(pop, bg=self.color_dark_bg, fg="#ffffff", insertbackground="white", bd=1)
         entry_name.insert(0, "QIDI White Custom")
+
         entry_name.pack(fill="x", padx=60, pady=4)
 
         # Commit Sync Button Action Handler
@@ -170,6 +173,7 @@ class KamelionDesktopApp:
         logo_window.title("Kamelion Asset Showcase")
         logo_window.geometry("300x300")
         logo_window.configure(bg=self.color_dark_bg)
+
         
         lbl = tk.Label(logo_window, text="KAMELION EMBLEM SYSTEM", font=("Segoe UI", 10, "bold"), fg=self.color_sea_green, bg=self.color_dark_bg)
         lbl.pack(pady=15)
@@ -177,3 +181,12 @@ class KamelionDesktopApp:
         canvas = tk.Canvas(logo_window, width=160, height=160, bg=self.color_dark_bg, highlightthickness=0)
         canvas.pack()
         # Hand-drawn geometry nodes tracking the round mechanical eye configurations
+        canvas.create_oval(20, 20, 140, 140, fill=self.color_panel_bg, outline=self.color_sea_green, width=3)
+        canvas.create_oval(45, 45, 115, 115, fill=self.color_sea_green, outline="")
+        canvas.create_oval(65, 65, 95, 95, fill="#ffffff", outline="")
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = KamelionDesktopApp(root)
+    root.mainloop()
+
+
